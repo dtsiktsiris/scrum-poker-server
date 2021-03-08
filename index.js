@@ -5,10 +5,10 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ server:server });
 
-wss.on('connection', function connection(ws) {
+wss.on('connection', function connection(ws,req) {
   console.log('A new client Connected!');
   ws.send('Welcome New Client!');
-
+  console.log(req.url);
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
     ws.send(message)
@@ -19,6 +19,9 @@ wss.on('connection', function connection(ws) {
     });
     
   });
+  ws.on('close',function closing(code,reason){
+    console.log("closing");
+  })
 });
 
 app.get('/', (req, res) => res.send('Hello World!'))
