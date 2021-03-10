@@ -5,8 +5,6 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ server: server });
 
-const replaceRegex = /[o]/g
-
 function sendStatuses() {
   let list = [];
 
@@ -18,17 +16,12 @@ function sendStatuses() {
     }
   });
 
-  if (list.includes("ο") === true) {
-    console.log(list);
-
+  if (list.includes('o') === true) {
     for (let i = 0; i < list.length; i++) {
-      
-      if (list[i].charCodeAt(0) != 959) {
+      if (list[i] != 'o') {
         list[i] = 'x';
       }
     }
-
-    console.log(list);
   }
 
   // we send list with choices to all clients
@@ -39,7 +32,7 @@ function sendStatuses() {
 
 wss.on('connection', function connection(ws, req) {
   console.log('A new client Connected!');
-  ws.choice = "ο"
+  ws.choice = 'o';
 
   sendStatuses();
 
