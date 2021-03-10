@@ -5,9 +5,11 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ server: server });
 
-function sendStatuses (){
+const replaceRegex = /[o]/g
+
+function sendStatuses() {
   let list = [];
-    
+
   // parse all connected clients(same as ws)
   // and push choices in the list 
   wss.clients.forEach(function each(client) {
@@ -15,6 +17,19 @@ function sendStatuses (){
       list.push(client.choice)
     }
   });
+
+  if (list.includes("ο") === true) {
+    console.log(list);
+
+    for (let i = 0; i < list.length; i++) {
+      
+      if (list[i].charCodeAt(0) != 959) {
+        list[i] = 'x';
+      }
+    }
+
+    console.log(list);
+  }
 
   // we send list with choices to all clients
   wss.clients.forEach(function each(client) {
@@ -24,17 +39,17 @@ function sendStatuses (){
 
 wss.on('connection', function connection(ws, req) {
   console.log('A new client Connected!');
-  ws.choice = 'x'
+  ws.choice = "ο"
 
   sendStatuses();
-  
+
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
 
     // we save the choice of the user(message)
     // so to put it on list 
     ws.choice = message;
-    
+
     sendStatuses();
 
   });
