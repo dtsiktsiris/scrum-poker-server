@@ -61,6 +61,15 @@ wss.on('connection', function connection(ws, req) {
       }
       console.log(rooms);
     }
+    else if(message === 'reset-votes'){
+      let roomId = req.url.replace("/", "");
+      wss.clients.forEach(function each(client) {
+        if (client.choice != null && client.roomId == roomId) {
+          client.choice = "o";
+        }
+      });
+      sendStatuses(roomId);
+    }
     else if (req.url.length > 1) {
       ws.choice = message;
       sendStatuses(req.url.replace("/", ""));
