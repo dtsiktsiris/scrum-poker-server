@@ -32,15 +32,28 @@ function sendStatuses(roomId) {
   });
 }
 
-let rooms = new Set();
+let rooms = new Map();
 
 wss.on('connection', function connection(ws, req) {
   console.log(req.url.replace("/", ""))
   console.log('A new client Connected!');
   if (req.url.length > 1) {
-    ws.roomId = req.url.replace("/", "");
-    ws.choice = 'o';
-    sendStatuses(req.url.replace("/", ""));
+    let rId = req.url.replace("/", "");
+    if (rooms.has(rId)) {
+      ws.roomId = rId;
+      ws.choice = 'o';
+      if (rooms.get(rId) === null) {
+        rooms.set(rId, 1);
+      }
+      else {
+        rooms.set(rId, rooms.get(rId) + 1);
+      }
+      sendStatuses(rId);
+      console.log(rooms);
+    }
+    else {
+      ws.send('room-not-found');
+    }
   }
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
@@ -54,14 +67,14 @@ wss.on('connection', function connection(ws, req) {
         roomNumber = Math.floor(Math.random() * Math.floor(10000));
         if (!rooms.has(roomNumber)) {
           roomNotFound = false;
-          rooms.add(roomNumber);
+          rooms.set(`${roomNumber}`, null);
           ws.send(roomNumber);
           ws.close();
         }
       }
       console.log(rooms);
     }
-    else if(message === 'reset-votes'){
+    else if (message === 'reset-votes') {
       let roomId = req.url.replace("/", "");
       wss.clients.forEach(function each(client) {
         if (client.choice != null && client.roomId == roomId) {
@@ -71,8 +84,13 @@ wss.on('connection', function connection(ws, req) {
       sendStatuses(roomId);
     }
     else if (req.url.length > 1) {
-      ws.choice = message;
-      sendStatuses(req.url.replace("/", ""));
+      if (rooms.has(req.url.replace("/", ""))) {
+        ws.choice = message;
+        sendStatuses(req.url.replace("/", ""));
+      }
+      else {
+        ws.send('room-not-found');
+      }
     }
   });
   ws.on('close', function closing(code, reason) {
