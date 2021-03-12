@@ -5,13 +5,13 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ server: server });
 
-function sendStatuses() {
+function sendStatuses(roomId) {
   let list = [];
 
   // parse all connected clients(same as ws)
   // and push choices in the list 
   wss.clients.forEach(function each(client) {
-    if (client.choice != null) {
+    if (client.choice != null && client.roomId == roomId) {
       list.push(client.choice)
     }
   });
@@ -26,25 +26,45 @@ function sendStatuses() {
 
   // we send list with choices to all clients
   wss.clients.forEach(function each(client) {
-    client.send(JSON.stringify(list));
+    if (client.roomId == roomId) {
+      client.send(JSON.stringify(list));
+    }
   });
 }
 
+let rooms = new Set();
+
 wss.on('connection', function connection(ws, req) {
+  console.log(req.url.replace("/", ""))
   console.log('A new client Connected!');
-  ws.choice = 'o';
-
-  sendStatuses();
-
+  if (req.url.length > 1) {
+    ws.roomId = req.url.replace("/", "");
+    ws.choice = 'o';
+    sendStatuses(req.url.replace("/", ""));
+  }
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
 
     // we save the choice of the user(message)
     // so to put it on list 
-    ws.choice = message;
-
-    sendStatuses();
-
+    if (message === 'create-room') {
+      let roomNotFound = true;
+      let roomNumber;
+      while (roomNotFound) {
+        roomNumber = Math.floor(Math.random() * Math.floor(10000));
+        if (!rooms.has(roomNumber)) {
+          roomNotFound = false;
+          rooms.add(roomNumber);
+          ws.send(roomNumber);
+          ws.close();
+        }
+      }
+      console.log(rooms);
+    }
+    else if (req.url.length > 1) {
+      ws.choice = message;
+      sendStatuses(req.url.replace("/", ""));
+    }
   });
   ws.on('close', function closing(code, reason) {
     console.log("closing");
