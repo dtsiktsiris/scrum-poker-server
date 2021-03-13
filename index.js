@@ -101,6 +101,9 @@ wss.on('connection', function connection(ws, req) {
       if (rooms.get(rId) < 1) {
         rooms.delete(rId);
       }
+      else{
+        sendStatuses(rId);
+      }
     }
   })
 });
