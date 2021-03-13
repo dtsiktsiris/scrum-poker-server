@@ -5,9 +5,8 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ server: server });
 
-function sendStatuses(roomId) {
+function getVotesByRoom(roomId) {
   let list = [];
-
   // parse all connected clients(same as ws)
   // and push choices in the list 
   wss.clients.forEach(function each(client) {
@@ -15,6 +14,20 @@ function sendStatuses(roomId) {
       list.push(client.choice)
     }
   });
+  return list;
+}
+
+function sendVoteListToRoom(roomId, list) {
+  // we send list with choices to all clients
+  wss.clients.forEach(function each(client) {
+    if (client.roomId == roomId) {
+      client.send(JSON.stringify(list));
+    }
+  });
+}
+
+function sendStatuses(roomId) {
+  let list = getVotesByRoom(roomId);
 
   if (list.includes('o') === true) {
     for (let i = 0; i < list.length; i++) {
@@ -24,18 +37,12 @@ function sendStatuses(roomId) {
     }
   }
 
-  // we send list with choices to all clients
-  wss.clients.forEach(function each(client) {
-    if (client.roomId == roomId) {
-      client.send(JSON.stringify(list));
-    }
-  });
+  sendVoteListToRoom(roomId, list);
 }
 
 let rooms = new Map();
 
 wss.on('connection', function connection(ws, req) {
-  console.log(req.url.replace("/", ""))
   console.log('A new client Connected!');
   if (req.url.length > 1) {
     let rId = req.url.replace("/", "");
@@ -85,22 +92,10 @@ wss.on('connection', function connection(ws, req) {
     }
     else if (message === 'reveal-votes') {
       let roomId = req.url.replace("/", "");
-      let list = [];
 
-      // parse all connected clients(same as ws)
-      // and push choices in the list 
-      wss.clients.forEach(function each(client) {
-        if (client.choice != null && client.roomId == roomId) {
-          list.push(client.choice)
-        }
-      });
+      let list = getVotesByRoom(roomId);
 
-      // we send list with choices to all clients
-      wss.clients.forEach(function each(client) {
-        if (client.roomId == roomId) {
-          client.send(JSON.stringify(list));
-        }
-      });
+      sendVoteListToRoom(roomId, list);
 
     }
     else if (req.url.length > 1) {
