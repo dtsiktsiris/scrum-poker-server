@@ -83,6 +83,26 @@ wss.on('connection', function connection(ws, req) {
       });
       sendStatuses(roomId);
     }
+    else if (message === 'reveal-votes') {
+      let roomId = req.url.replace("/", "");
+      let list = [];
+
+      // parse all connected clients(same as ws)
+      // and push choices in the list 
+      wss.clients.forEach(function each(client) {
+        if (client.choice != null && client.roomId == roomId) {
+          list.push(client.choice)
+        }
+      });
+
+      // we send list with choices to all clients
+      wss.clients.forEach(function each(client) {
+        if (client.roomId == roomId) {
+          client.send(JSON.stringify(list));
+        }
+      });
+
+    }
     else if (req.url.length > 1) {
       if (rooms.has(req.url.replace("/", ""))) {
         ws.choice = message;
@@ -101,7 +121,7 @@ wss.on('connection', function connection(ws, req) {
       if (rooms.get(rId) < 1) {
         rooms.delete(rId);
       }
-      else{
+      else {
         sendStatuses(rId);
       }
     }
