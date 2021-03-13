@@ -95,6 +95,13 @@ wss.on('connection', function connection(ws, req) {
   });
   ws.on('close', function closing(code, reason) {
     console.log("closing");
+    if (rooms.has(req.url.replace("/", ""))) {
+      let rId = req.url.replace("/", "");
+      rooms.set(rId, rooms.get(rId) - 1);
+      if (rooms.get(rId) < 1) {
+        rooms.delete(rId);
+      }
+    }
   })
 });
 
