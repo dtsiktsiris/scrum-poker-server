@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  scrum_poker_server:
+    build: .
+    image: scrum_poker_server
+    command: npm start
+    ports:
+      - '3001:3001'
+    volumes:
+      - '.:/app'
